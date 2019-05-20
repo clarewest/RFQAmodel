@@ -139,7 +139,7 @@ gg_color_hue <- function(n) {
 colours=gg_color_hue(6)
 
 ## Results from classifying Validation Set models
-results <- read.table(file="RFQAmodel_validation_results.txt", header=TRUE, stringsAsFactors=FALSE)
+results <- read.table(file="results/RFQAmodel_validation_results.txt", header=TRUE, stringsAsFactors=FALSE)
 
 
 ### ROC Curves ###
@@ -166,7 +166,7 @@ pg.validationroc <- plot_grid(p3.validationroc$p, validationroclike.all$p, label
 ggsave(pg.validationroc, file="SIFig11.pdf", width=8.5, height=4.5)
 
 ### Results from classifying CASP models
-CASP_results <- read.table("RFQAmodel_CASP_test_results.txt", header=TRUE, stringsAsFactors=FALSE)
+CASP_results <- read.table("results/RFQAmodel_CASP_test_results.txt", header=TRUE, stringsAsFactors=FALSE)
 
 ## SI Table 4: CASP results 
 CASP_results %>% 
@@ -180,12 +180,12 @@ CASP_results %>%
   summarise(Top5=sum(Top5), Top1=sum(Top1),Max=sum(Max),Total=length(Confidence)) %>% 
   mutate(Precision.Top5=round(Top5/Total,2), Precision.Top1=round(Top1/Total,2)) %>% 
   xtable() %>% 
-  print(file="CASP_summary_table.tex", include.rownames=FALSE)
+  print(file="results/CASP_summary_table.tex", include.rownames=FALSE)
 
 ### CASP13 ROC Curves compared to other QA scores 
 
 not_evaluated <- c("T0952","T0956","T0972","T0988","T0994","T1007","T1012","T1023s1","T1023s2","T1023s3","T0908","T0916","T0919","T0924","T0925","T0926","T0927","T0935","T0936","T0937","T0938","T0939","T0940","T0999","T1000","T1004","T1011","T0974s2","T0963","T0960","T0980s2")
-QA <- read.table("stage2_QA_predictions.txt", stringsAsFactors=FALSE, col.names=c("Set","Stage","Target","Group","Decoy","QA")) %>% filter(! Target %in% not_evaluated)
+QA <- read.table("data/CASP_stage2_QA_predictions.txt", stringsAsFactors=FALSE) %>% filter(! Target %in% not_evaluated)
 cQA <- QA %>% reshape2::dcast(Set + Stage + Target + Decoy ~ Group, value.var="QA") 
 tQA <- CASP_results %>% merge(cQA, by=c("Set","Target","Decoy"))
 tQA <- tQA %>% mutate(Label = ifelse(TMScore >= 0.5, 1,0)) %>% filter(Type=="FM", !is.na(TMScore), Set=="CASP13") 
@@ -203,7 +203,7 @@ ggsave(pg.casp13proc, file="Figure05.pdf",width=9,height=4.5)
 
 ## SI Fig 12
 all_results <- results %>% 
-  bind_rows(read.table(file="RFQAmodel_training_results.txt", header=TRUE, stringsAsFactors=FALSE)) %>%
+  bind_rows(read.table(file="results/RFQAmodel_training_results.txt", header=TRUE, stringsAsFactors=FALSE)) %>%
   bind_rows(CASP_results %>% 
             filter(Type=="FM") %>% 
             select(-TMscore.C,-Category, -Domain, -Type) %>% 

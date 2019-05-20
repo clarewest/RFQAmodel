@@ -28,8 +28,8 @@ return(df2)
 }
 
 ## Get features
-trainingset = read.table("RFQAmodel_training.txt", header=TRUE, stringsAsFactors=FALSE)
-validationset = read.table("RFQAmodel_validation.txt", header=TRUE, stringsAsFactors=FALSE)
+trainingset = read.table("data/RFQAmodel_training.txt", header=TRUE, stringsAsFactors=FALSE)
+validationset = read.table("data/RFQAmodel_validation.txt", header=TRUE, stringsAsFactors=FALSE)
 
 ## Label models as correct or incorrect 
 trainingset <- trainingset %>% mutate(Label = ifelse(TMScore >= 0.5, 1,0))
@@ -54,7 +54,7 @@ results <- val_tab %>% ungroup() %>%
   group_by(Target) %>% 
   mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
 
-#write.table(results, file="RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
+#write.table(results, file="results/RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
 
 ## Add "All", "High and Medium", and "Predicted Modelling"
 ## For each confidence level, get:
@@ -82,16 +82,16 @@ print(stats)
 
 ## Classify models in the Training Set
 train_results <- train_tab %>% ungroup() %>% mutate(RFQAmodel=as.numeric(predict(RFQAmodel, train_tab, type="prob")[,2]))
-write.table(train_results, file="RFQAmodel_training_results.txt", row.names=FALSE, quote=FALSE)
+write.table(train_results, file="results/RFQAmodel_training_results.txt", row.names=FALSE, quote=FALSE)
 
 
 ## CASP Test set
 not_evaluated <- c("T0952","T0956","T0972","T0988","T0994","T1007","T1012","T1023s1","T1023s2","T1023s3","T0908","T0916","T0919","T0924","T0925","T0926","T0927","T0935","T0936","T0937","T0938","T0939","T0940","T0999","T1000","T1004","T1011","T0974s2","T0963","T0960","T0980s2")
-testset <- read.table("RFQAmodel_CASP_test.txt", header=TRUE, stringsAsFactors=FALSE) %>% filter(! Target %in% not_evaluated)
+testset <- read.table("data/RFQAmodel_CASP_test.txt", header=TRUE, stringsAsFactors=FALSE) %>% filter(! Target %in% not_evaluated)
 test_tab <- get_features(testset)
 
-res <- read.table("CASPs_results_table.txt", header=TRUE, stringsAsFactors=FALSE) %>% rename(Set=CASP)             # scores from CASP
-cat <- read.table("classifications.txt", col.names=c("Set","Target","Category","Domain"), stringsAsFactors=FALSE)  # classification of targets from CASP
+res <- read.table("data/CASP_model_scores.txt", header=TRUE, stringsAsFactors=FALSE) %>% rename(Set=CASP)             # scores from CASP
+cat <- read.table("data/CASP_target_classifications.txt", header=TRUE, stringsAsFactors=FALSE)  
 
 ## Classify models
 ## Add QA predictions, CASP results and target categories
@@ -107,7 +107,7 @@ CASP_results <- test_tab %>%
   filter(Category!="not") %>% 
   mutate(Type=ifelse(Category %in% c("FM","FM/TBM"), "FM", "TBM"))
 
-#write.table(CASP_results, file="RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
+#write.table(CASP_results, file="results/RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
 
 ## Calculate precision
 CASP_stats <- CASP_results %>% 
@@ -125,95 +125,4 @@ CASP_stats <- CASP_results %>%
 
 print(CASP_stats)
 
-if(0){
-#train_prediction = predict(RFQAmodel,train_tab,type="prob")
-#train_results <- cbind(as.data.frame(train_tab), train_prediction)
 
-all_results <- bind_rows(results, train_tab %>% ungroup() %>% mutate(RFQAmodel=as.numeric(predict(RFQAmodel, train_tab, type="prob")[,2]))) 
-}
-if(0){
-
-clare_pal <- c("#00BF7D", "#A3A500", "#F8766D","#00B0F6","#E76BF3","#636363")
-axis_label_size = 8
-facet_label_size = axis_label_size + 1
-title_size = 10
-label_size = 2
-legend_label_size = axis_label_size 
-
-rectangles=data.frame(x1=c(0,0,0,0), x2=c(1,1,1,1), y1=c(0,0.1,0.3,0.5), y2=c(0.1,0.3,0.5,1), category=c('Failed','Low','Medium','High'))
-rectangles$category = factor(rectangles$category, levels=c("High","Medium","Low","Failed"))
-
-np <- ggplot(all_results %>% group_by(Set, Target) %>% slice(which.max(RFQAmodel))) + geom_rect(data=rectangles, mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2, fill=category), alpha=0.1) + geom_point(aes(x=TMScore, y=RFQAmodel), alpha=0.6, size=0.5) +   scale_y_continuous(limits=c(0,1), breaks=c(seq(0,1,0.2)), expand=c(0,0)) +   scale_x_continuous(limits=c(0,1), breaks=c(seq(0,1,0.2)), expand=c(0,0)) + geom_hline(yintercept=c(0.1,0.3,0.5)) + geom_vline(xintercept=0.5) +   theme_minimal() + theme(legend.position="bottom", legend.box="vertical", panel.grid.minor = element_blank(),axis.text=element_text(size=axis_label_size),axis.title=element_text(size=facet_label_size), legend.text=element_text(size=legend_label_size), panel.spacing.x = unit(5,"mm")) + labs(x="TM-Score",y="RFQAmodel") + facet_wrap(~Set) + scale_fill_manual("", values=c(clare_pal[1:3],"darkgray")) + facet_wrap(~Set)
-
-ggsave(np, file="~/pub_html/Clare/Apr2019/new_plot.pdf", width=8.1,height=4,dpi=350,device="pdf")
-
-all_all_results <- CASP_results2 %>% filter(CASP=="CASP13", Type=="FM") %>% mutate(SCOP_Class = "n") %>% bind_rows(all_results)
-
-all_all_results$Set <- factor(all_all_results$Set, levels = c("Training","Validation","CASP13"))
-
-np2 <- ggplot(all_all_results) + geom_rect(data=rectangles, mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2, fill=category), alpha=0.2) + geom_point(aes(x=TMScore, y=Correct),alpha=0.6, size=0.5) +   scale_y_continuous(limits=c(0,1), breaks=c(seq(0,1,0.2)), expand=c(0,0)) +   scale_x_continuous(limits=c(0,1), breaks=c(seq(0,1,0.2)), expand=c(0,0)) + geom_hline(yintercept=c(0.1,0.3,0.5)) + geom_vline(xintercept=0.5) +   theme_minimal() + theme(legend.position="bottom", legend.box="vertical", legend.margin=margin(0,0,0,0), panel.grid.minor = element_blank(),axis.text=element_text(size=axis_label_size),axis.title=element_text(size=facet_label_size), legend.text=element_text(size=legend_label_size)) + labs(x="TM-Score",y="RFQAmodel") + facet_wrap(~Set) + scale_fill_manual("", values=c(clare_pal[1:3],"darkgray"))
-ggsave(np2, file="~/pub_html/Clare/Feb2019/new_plot_trio.pdf", width=12.1,height=4,dpi=350,device="pdf")
-
-all_all_results %>% group_by(Set, Target) %>% arrange(Target, -Correct) %>% slice(1) %>% ungroup() %>% group_by(Set, Correct.bin = cut(Correct, breaks=seq(-0.1,1.1,by=0.1) )) %>% select(Set, Correct.bin, Correct, TMScore) %>% mutate(Precision = sum(TMScore>=0.5)/length(TMScore)) %>% ggplot(., aes(x=Correct.bin, y=Precision, colour=Set)) + geom_point() + theme_bw() + facet_wrap(~Set)
-
-
-#"In SI figure 15, The RFQAmodel with and without EigenThreader doesn't seem to be that much different. A scatter plot of the RFQAmodel scores (with and without eigenthreader) and R^2 value, might make the difference more apparent. Just to make sure the difference isn't simply due to some points at the borderline of hard/medium/low, with a minor shift."
-
-load("RFQAmodel_classifier_noET_noMA.Rda")
-val_tab_results <- val_tab
-val_tab_results$RFQAmodel <- predict(RFQAmodel,val_tab,type="prob")[,1]
-#val_tab_results$RFQAmodel_noET <- predict(RFQAmodel_noET,val_tab,type="prob")[1,]
-val_tab_results$RFQAmodel_noET_noMA <- predict(RFQAmodel_noET_noMA,val_tab, type="prob")[,1]
-
-rsq <- function(x,y) summary(lm(y~x))$r.squared
-RFQA.rsq <- rsq(val_tab_results$RFQAmodel_noET_noMA,val_tab_results$RFQAmodel)
-plot.confidence.order=c("Failed","Low","Medium","High")
-ggplot(val_tab_results, aes(x=RFQAmodel, y=RFQAmodel_noET_noMA)) + geom_point(alpha=0.5) + geom_abline(intercept=c(-0.1,0,0.1), colour="red") + labs(x="RFQAmodel Score", y="RFQAmodel no ET") + geom_smooth(method="lm") + annotate(geom="text",x=0.15,y=0.75, label=paste("R^2 =",RFQA.rsq))
-ggsave("~/pub_html/Clare/Feb2019/rsq_noETMA.pdf")
-
-png("~/pub_html/Clare/Feb2019/roc_noET_noMA.png", width=2250, height=2250, res=450)
-result2 = calculate_performance_rf(val_tab_results,val_tab_results$Label,RFQAmodel,1,)
-result3 = calculate_performance_rf(val_tab_results,val_tab_results$Label,RFQAmodel_noET,2,"TRUE")
-result4 = calculate_performance_rf(val_tab_results,val_tab_results$Label,RFQAmodel_noET_noMA,3,"TRUE")
-result5 = calculate_performance_rf(val_tab_results,val_tab_results$Label,RFQAmodel_noET_noMA_noPPV,4,"TRUE")
-#result4 = calculate_performance(-val_tab$ProQ3D,val_tab$Label,3,"TRUE")
-#result5 = calculate_performance(-val_tab$PCombC,val_tab$Label,4,"TRUE")
-#result6 = calculate_performance(-val_tab$PCons,val_tab$Label,5,"TRUE")
-#result7 = calculate_performance(-val_tab$ProQRosFAD,val_tab$Label,6,"TRUE")
-legend("bottomright",	c(paste("RFQAmodel - AUC=",round(result2[[2]]@y.values[[1]],2)),paste("No ET - AUC=",round(result3[[2]]@y.values[[1]],2)),paste("No ET or MA - AUC=",round(result4[[2]]@y.values[[1]],2)),paste("No ET MA PPV - AUC=",round(result5[[2]]@y.values[[1]],2))), lwd = 2, lty = seq(1,6) ,col=colours[1:6])
-dev.off()
-
-### Importance plot
-imp <- varImpPlot(RFQAmodel) %>% as.data.frame() %>% mutate(Feature = rownames(imp))
-imp$Feature <- recode(imp$Feature, "MapAlign"="map_align", "MapLength" = "map_length", "ProQRosCenD" = "Rosetta_centroid", "ProQRosFAD" = "Rosetta_full_atom", "Contact" = "SAINT2_Contact", "Correct" = "RFQAmodel", "Best" = "Total_Successes" )
-
-#}
-
-## Correlation
-
-ddply(val_tab_results %>% filter(TMScore>=0.2), .(Target), summarise, "corr" = cor.test(TMScore, RFQAmodel, method = "spearman", exact=FALSE)$estimate, "pval" = cor.test(TMScore, RFQAmodel, method = "spearman", exact=FALSE)$p.value)
-
-## no P-values
-ddply(val_tab_results, .(Target), summarise, "corr" = cor(TMScore, RFQAmodel, method = "spearman"))
-
-#tQA %>% select(-NumCon, -c(18:64), -aux)
-
-#tQA %>% select(-NumCon, -c(18:64), -aux, -Label) %>% reshape2::melt(., id.vars=c("CASP","Target","Decoy","TMScore","Category","Domain","Confidence", "Type", "TMScore"), na.rm=TRUE) %>%  arrange(value) %>% ddply(., .(Target, variable), summarise, "corr" = cor(TMScore, value, method = "spearman"))
-library(plyr)
-tQA %>% mutate(EigenTHREADER=EigenTHREADER/ET_Max, SAINT2=-SAINT2, Contact=-Contact) %>% filter(TMScore>=0.2) %>% select(-c(20:62), -Stage, -Label, -Beff, -Length, -NumCon) %>% reshape2::melt(., id.vars=c("Set","Target","Decoy","Category","Domain","Confidence", "Type", "TMScore"), na.rm=TRUE) %>%  arrange(value) %>% plyr::ddply(., .(Target, variable), summarise, "rho" = cor.test(TMScore, value, method = "spearman", exact=FALSE)$estimate, pval = cor.test(TMScore, value, method = "spearman", exact=FALSE)$p.val) -> corr
-
-corr %>% group_by(variable) %>% dplyr::summarise(mean=mean(rho, na.rm=TRUE)) %>% arrange(-abs(mean)) %>% as.data.frame()
-corr %>% group_by(variable) %>% dplyr::summarise(mean=mean(rho, na.rm=TRUE)) %>% arrange(-abs(mean)) %>% as.data.frame() %>% ggplot(., aes(x=reorder(variable,mean), y=mean)) + geom_bar(stat="identity") + coord_flip()
-ggsave("~/pub_html/Clare/Mar2019/corr.pdf", width=8, height=8)
-
-detach("package:plyr")
-
-loss <- tQA %>% mutate(EigenTHREADER=EigenTHREADER/ET_Max, SAINT2=-SAINT2, Contact=-Contact) %>% select(-c(20:62), -Stage, -Label, -Beff, -Length, -NumCon) %>% reshape2::melt(., id.vars=c("Set","Target","Decoy","Category","Domain","Confidence", "Type", "TMScore", "GDT.TS"), na.rm=TRUE) %>% group_by(variable, Target) %>% mutate(Top.TM=max(TMScore), Top.GDT.TS = max(GDT.TS)) %>% slice(which.max(value)) %>% mutate(TM.loss = Top.TM-TMScore, GDT.TS.loss = Top.GDT.TS-GDT.TS) %>% ungroup() %>% group_by(variable) %>% summarise(mean.GDT.TS.loss = mean(GDT.TS.loss), mean.TM.loss = mean(TM.loss)) %>% arrange(mean.TM.loss)
-
-loss %>% mutate(mean.GDT.TS.loss = mean.GDT.TS.loss/100) %>% filter(variable!="TMscore.C")  %>% gather(key="Measure",value="Loss", -variable) %>% ggplot(., aes(x=reorder(variable, -Loss), y=Loss, fill=Measure)) + geom_bar(stat="identity", position="dodge") + labs(x="", y="Mean Loss") + coord_flip()
-ggsave("~/pub_html/Clare/Mar2019/loss.pdf", width=8, height=8)
-
-#}
-
-
-}
