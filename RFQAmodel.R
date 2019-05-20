@@ -12,7 +12,7 @@ library(ROCR)
 get_features <- function(df){
 df2 <- df %>% 
   select(-SCOP_Class) %>%  
-  group_by(Target) %>% 
+  group_by(Target, Set) %>% 
   mutate(S2_Max=min(SAINT2), S2_Med=median(SAINT2), S2_Min=max(SAINT2), S2_Spr=S2_Max-S2_Med,
         Con_Max=min(Contact), Con_Med=median(Contact), Con_Min=max(Contact),Con_Spr=Con_Max-Con_Med,
         PC_Max=max(PCons), PC_Med=median(PCons), PC_Min=min(PCons), PC_Spr=PC_Max-PC_Med,
@@ -54,7 +54,7 @@ results <- val_tab %>% ungroup() %>%
   group_by(Target) %>% 
   mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
 
-#write.table(results, file="results/RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
+write.table(results, file="results/RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
 
 ## Add "All", "High and Medium", and "Predicted Modelling"
 ## For each confidence level, get:
@@ -90,7 +90,7 @@ not_evaluated <- c("T0952","T0956","T0972","T0988","T0994","T1007","T1012","T102
 testset <- read.table("data/RFQAmodel_CASP_test.txt", header=TRUE, stringsAsFactors=FALSE) %>% filter(! Target %in% not_evaluated)
 test_tab <- get_features(testset)
 
-res <- read.table("data/CASP_model_scores.txt", header=TRUE, stringsAsFactors=FALSE) %>% rename(Set=CASP)             # scores from CASP
+res <- read.table("data/CASP_model_scores.txt", header=TRUE, stringsAsFactors=FALSE) %>% rename(Set=CASP) 
 cat <- read.table("data/CASP_target_classifications.txt", header=TRUE, stringsAsFactors=FALSE)  
 
 ## Classify models
@@ -107,7 +107,7 @@ CASP_results <- test_tab %>%
   filter(Category!="not") %>% 
   mutate(Type=ifelse(Category %in% c("FM","FM/TBM"), "FM", "TBM"))
 
-#write.table(CASP_results, file="results/RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
+write.table(CASP_results, file="results/RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
 
 ## Calculate precision
 CASP_stats <- CASP_results %>% 
@@ -124,5 +124,17 @@ CASP_stats <- CASP_results %>%
   mutate(Precision.Top5=Top5/Total, Precision.Top1=Top1/Total)
 
 print(CASP_stats)
+
+
+## Extra models
+extras <- read.table("data/RFQAmodel_extras.txt", header=TRUE, stringsAsFactors=FALSE)
+extra_tab <- get_features(extras)
+extra_results <- extra_tab %>% 
+  ungroup() %>% 
+  mutate(RFQAmodel = as.numeric(predict(RFQAmodel,extra_tab,type="prob")[,2])) %>% 
+  group_by(Set, Target) %>% 
+  mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
+
+write.table(extra_results, "results/RFQAmodel_extras_results.txt",quote=FALSE, row.names=FALSE)
 
 

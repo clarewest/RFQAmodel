@@ -158,12 +158,12 @@ validationroclike.some <- plot_roclike(p2.validationroc$results, roc.features, m
 validationroclike.all <- plot_roclike(p4.validationroc$results, allroc.features, max_correct)
 
 ### Main text Figure, top features
-ggsave(validationroclike.some$p, file="Figure03.eps", width=4.5, height=4.5)
-ggsave(validationroclike.some$p, file="Figure03.pdf", width=4.5, height=4.5)
+ggsave(validationroclike.some$p, file="figures/Figure03.eps", width=4.5, height=4.5)
+ggsave(validationroclike.some$p, file="figures/Figure03.pdf", width=4.5, height=4.5)
 
 ### SI Figure, all features
 pg.validationroc <- plot_grid(p3.validationroc$p, validationroclike.all$p, labels=c("A","B"), ncol=2)
-ggsave(pg.validationroc, file="SIFig11.pdf", width=8.5, height=4.5)
+ggsave(pg.validationroc, file="figures/SIFig11.pdf", width=8.5, height=4.5)
 
 ### Results from classifying CASP models
 CASP_results <- read.table("results/RFQAmodel_CASP_test_results.txt", header=TRUE, stringsAsFactors=FALSE)
@@ -180,12 +180,12 @@ CASP_results %>%
   summarise(Top5=sum(Top5), Top1=sum(Top1),Max=sum(Max),Total=length(Confidence)) %>% 
   mutate(Precision.Top5=round(Top5/Total,2), Precision.Top1=round(Top1/Total,2)) %>% 
   xtable() %>% 
-  print(file="results/CASP_summary_table.tex", include.rownames=FALSE)
+  print(file="results/RFQAmodel_CASP_summary_table.tex", include.rownames=FALSE)
 
 ### CASP13 ROC Curves compared to other QA scores 
 
 not_evaluated <- c("T0952","T0956","T0972","T0988","T0994","T1007","T1012","T1023s1","T1023s2","T1023s3","T0908","T0916","T0919","T0924","T0925","T0926","T0927","T0935","T0936","T0937","T0938","T0939","T0940","T0999","T1000","T1004","T1011","T0974s2","T0963","T0960","T0980s2")
-QA <- read.table("data/CASP_stage2_QA_predictions.txt", stringsAsFactors=FALSE) %>% filter(! Target %in% not_evaluated)
+QA <- read.table("data/CASP_stage2_QA_predictions.txt", stringsAsFactors=FALSE, header=TRUE) %>% filter(! Target %in% not_evaluated)
 cQA <- QA %>% reshape2::dcast(Set + Stage + Target + Decoy ~ Group, value.var="QA") 
 tQA <- CASP_results %>% merge(cQA, by=c("Set","Target","Decoy"))
 tQA <- tQA %>% mutate(Label = ifelse(TMScore >= 0.5, 1,0)) %>% filter(Type=="FM", !is.na(TMScore), Set=="CASP13") 
@@ -198,8 +198,8 @@ CASP13_max = CASP_results %>% filter(Type=="FM", Set=="CASP13") %>% group_by(Tar
 casp13roclike <- plot_roclike(p2.casp13roc$results, casp13roc.features, CASP13_max)
 
 pg.casp13proc <- plot_grid(p1.casp13roc$p, casp13roclike$p, labels=c("A","B"))
-ggsave(pg.casp13proc, file="Figure05.eps",width=9,height=4.5)
-ggsave(pg.casp13proc, file="Figure05.pdf",width=9,height=4.5)
+ggsave(pg.casp13proc, file="figures/Figure05.eps",width=9,height=4.5)
+ggsave(pg.casp13proc, file="figures/Figure05.pdf",width=9,height=4.5)
 
 ## SI Fig 12
 all_results <- results %>% 
@@ -241,7 +241,36 @@ np <- ggplot(all_results %>%
   scale_fill_manual("", values=c(clare_pal[1:3],"darkgray")) + 
   coord_equal() 
 
-ggsave(np, file="SIFig12.pdf", width=10,height=4,dpi=350,device="pdf")
+ggsave(np, file="figures/SIFig12.pdf", width=10,height=4,dpi=350,device="pdf")
+
+### Extra models
+extra_results <- read.table("results/RFQAmodel_extras_results.txt",header=TRUE, stringsAsFactors=FALSE)
+
+p.extras <- extra_results %>% 
+  group_by(Set, Target) %>% 
+  mutate(Top.TM=max(TMScore)) %>% 
+  arrange(Set, Target, -RFQAmodel) %>% 
+  slice(1:5) %>% 
+  arrange(Set, Target, -TMScore) %>% 
+  slice(1)  %>% 
+  mutate(Confidence = factor(Confidence, levels=c("High","Medium","Low","Failed"))) %>% 
+  ggplot(., aes(x=Set)) + 
+         geom_hline(yintercept=0.5, colour="#333333") + 
+         geom_boxplot(data=extra_results, aes(x=Set, y=TMScore, group=Set), alpha=0.1, colour="#333333") + 
+         geom_point(aes(y=TMScore, colour=Confidence), shape=16) + 
+         geom_point(aes(y=Top.TM), shape=1) + 
+         geom_line(aes(x=as.numeric(Set), y=TMScore, colour=Confidence)) + 
+         facet_wrap(~Target) + 
+         theme_bw() +  
+         theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+         scale_y_continuous(limits=c(0,0.75)) + 
+         scale_colour_manual("", values=c(clare_pal[1:4])) + 
+         labs(x="Number of Models") +  
+         theme(legend.position="bottom", strip.background = element_blank(),panel.border = element_rect(colour = "black"), panel.grid.minor = element_blank())
+
+ggsave(p.extras, file="figures/Figure06.eps", width=7, height=5)
+ggsave(p.extras, file="figures/Figure06.pdf", width=7, height=5)
+
 
 load("RFQAmodel_classifier.Rda")
 ### Importance plot
@@ -259,4 +288,4 @@ plot_importance <- function(df, measure){
 }
 
 p.importance <- plot_grid(plot_importance(imp,"MeanDecreaseAccuracy"), plot_importance(imp,"MeanDecreaseGini"), rel_widths=c(1,1))
-ggsave(p.importance, file="importance.pdf")
+ggsave(p.importance, file="figures/importance.pdf")
