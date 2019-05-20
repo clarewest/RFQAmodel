@@ -29,16 +29,16 @@ Note that the lines writing these tables are included, but commented out.
 - RFQAmodel_CASP_test_results.txt
 
 ### Data files:
-Details of targets in Training, Validation and CASP sets
+#### Details of targets in Training, Validation and CASP sets
 - datasets_details.txt
 
-Data for RFQAmodel features:
+#### Data for RFQAmodel features:
 - RFQAmodel_training.txt
 - RFQAmodel_validation.txt
 - RFQAmodel_CASP
 - RFQAmodel_extras.txt
 
-CASP data:
+####CASP data:
 - classifications.txt
 - CASPs_results_table.txt
 - stage2_QA_predictions.txt
@@ -46,4 +46,3 @@ CASP data:
 ### Scripts for figure and table generation are also included:
 - figures.R
 
-# RFQAmodel
