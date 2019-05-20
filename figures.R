@@ -268,7 +268,7 @@ p.extras <- extra_results %>%
          labs(x="Number of Models") +  
          theme(legend.position="bottom", strip.background = element_blank(),panel.border = element_rect(colour = "black"), panel.grid.minor = element_blank())
 
-ggsave(p.extras, file="figures/Figure06.eps", width=7, height=5)
+ggsave(p.extras, file="figures/Figure06.eps", width=7, height=5, device=cairo_ps)
 ggsave(p.extras, file="figures/Figure06.pdf", width=7, height=5)
 
 
