@@ -5,7 +5,6 @@ This repository contains scripts and data to accompany:
 Clare E. West, Saulo H.P. de Oliveira & Charlotte M. Deane. *RFQAmodel: Random Forest Quality Assessment to identify a predicted protein structure in the correct fold.*
 
 ## Dependencies
-------------
 
 These scripts use R and the following packages:
 - tidyverse 
@@ -18,16 +17,10 @@ These scripts use R and the following packages:
 - xtable (for producing latex tables)
 
 ## Description of Files
-----------
 
-### Script for model training and classification:
-- RFQAmodel.R
-
-### Trained RFQAmodel classifier:
-- RFQAmodel_classifier.Rda
-
-### Details of targets in Training, Validation and CASP sets
-- datasets_details.txt
+- RFQAmodel.R - Script for model training and classification
+- RFQAmodel_classifier.Rda - Trained RFQAmodel classifier
+- datasets_details.txt - Details of targets in Training, Validation and CASP sets
 
 ### data files:
 - RFQAmodel features:
