@@ -35,8 +35,8 @@ These scripts use R and the following packages:
   - CASP_stage2_QA_predictions.txt
   - CASP_target_classifications.txt
  
-### Results files:
-Note that the lines writing these tables are included, but commented out. 
+### results files:
+Note that the lines writing these tables are included in RFQAmodel.R, but are commented out. 
 - RFQAmodel_validation_results.txt
 - RFQAmodel_CASP_test_results.txt
 - RFQAmodel_training_results.txt
