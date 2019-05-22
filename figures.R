@@ -158,8 +158,8 @@ validationroclike.some <- plot_roclike(p2.validationroc$results, roc.features, m
 validationroclike.all <- plot_roclike(p4.validationroc$results, allroc.features, max_correct)
 
 ### Main text Figure, top features
-ggsave(validationroclike.some$p, file="figures/Figure03.eps", width=4.5, height=4.5)
-ggsave(validationroclike.some$p, file="figures/Figure03.pdf", width=4.5, height=4.5)
+ggsave(validationroclike.some$p, file="figures/Figure02.eps", width=4.5, height=4.5)
+ggsave(validationroclike.some$p, file="figures/Figure02.pdf", width=4.5, height=4.5)
 
 ### SI Figure, all features
 pg.validationroc <- plot_grid(p3.validationroc$p, validationroclike.all$p, labels=c("A","B"), ncol=2)
