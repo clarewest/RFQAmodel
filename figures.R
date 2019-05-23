@@ -190,7 +190,7 @@ cQA <- QA %>% reshape2::dcast(Set + Stage + Target + Decoy ~ Group, value.var="Q
 tQA <- CASP_results %>% merge(cQA, by=c("Set","Target","Decoy"))
 tQA <- tQA %>% mutate(Label = ifelse(TMScore >= 0.5, 1,0)) %>% filter(Type=="FM", !is.na(TMScore), Set=="CASP13") 
 
-casp13roc.features = c("RFQAmodel", "QA058", "QA022", "QA275","QA139", "EigenTHREADER")
+casp13roc.features = c("RFQAmodel", "QA058", "QA022", "QA275","QA139")
 p1.casp13roc <- plot_roc(tQA %>% filter(Type=="FM"), casp13roc.features)
 p2.casp13roc <- plot_roc(tQA %>% filter(Type=="FM"), casp13roc.features, topmodel=TRUE)
 
