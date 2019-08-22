@@ -54,7 +54,7 @@ results <- val_tab %>% ungroup() %>%
   group_by(Target) %>% 
   mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
 
-write.table(results, file="results/RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
+#write.table(results, file="results/RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
 
 ## Add "All", "High and Medium", and "Predicted Modelling"
 ## For each confidence level, get:
@@ -82,7 +82,7 @@ print(stats)
 
 ## Classify models in the Training Set
 train_results <- train_tab %>% ungroup() %>% mutate(RFQAmodel=as.numeric(predict(RFQAmodel, train_tab, type="prob")[,2]))
-write.table(train_results, file="results/RFQAmodel_training_results.txt", row.names=FALSE, quote=FALSE)
+#write.table(train_results, file="results/RFQAmodel_training_results.txt", row.names=FALSE, quote=FALSE)
 
 
 ## CASP Test set
@@ -107,7 +107,7 @@ CASP_results <- test_tab %>%
   filter(Category!="not") %>% 
   mutate(Type=ifelse(Category %in% c("FM","FM/TBM"), "FM", "TBM"))
 
-write.table(CASP_results, file="results/RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
+#write.table(CASP_results, file="results/RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
 
 ## Calculate precision
 CASP_stats <- CASP_results %>% 
@@ -127,7 +127,7 @@ print(CASP_stats)
 
 
 ## Extra models
-extras <- read.table("data/RFQAmodel_extras.txt", header=TRUE, stringsAsFactors=FALSE)
+load("data/RFQAmodel_extras.Rda")
 extra_tab <- get_features(extras)
 extra_results <- extra_tab %>% 
   ungroup() %>% 
@@ -135,6 +135,68 @@ extra_results <- extra_tab %>%
   group_by(Set, Target) %>% 
   mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
 
-write.table(extra_results, "results/RFQAmodel_extras_results.txt",quote=FALSE, row.names=FALSE)
+print(extra_results)
 
+#save(extra_results, "results/RFQAmodel_extras_results.Rda")
 
+## Extra medium targets
+load("data/RFQAmodel_extramediums.Rda")
+extramedium_tab <- get_features(na.omit(extramediumfeatures))
+
+extramedium_results <-
+  extramedium_tab %>%
+  mutate(RFQAmodel = as.numeric(predict(RFQAmodel,extramedium_tab,type="prob")[,2])) %>% 
+  group_by(Set, Target) %>%
+  mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
+
+## Stats for High confidence or 10000
+stopped <- 
+  extramedium_results %>% 
+  select(Target, Set, RFQAmodel, Confidence,TMScore) %>% 
+  group_by(Target, Set) %>% 
+  mutate(Correct = max(TMScore)>=0.5) %>% 
+  mutate(Stop = ifelse(Confidence == "High", Confidence, as.character(Set))) %>% 
+  filter(Stop %in% c("High", "10000")) %>% 
+  ungroup() %>% 
+  group_by(Target) %>% 
+  filter(Set==min(Set))
+
+extramediumstats <-
+  stopped %>%
+  mutate(Confidence = "All") %>%
+  bind_rows(stopped) %>%
+  ungroup() %>%
+  mutate(Set = "RFQAiterative") %>%
+  bind_rows(results %>% 
+            filter(Set == 10000) %>% 
+            ungroup() %>% 
+            mutate(Set="10000")) %>%
+  bind_rows(results %>% 
+            filter(Set == 10000) %>% 
+            ungroup() %>% 
+            mutate(Set="10000",Confidence = "All")) %>%
+  bind_rows(results %>% 
+            filter(Set == 500) %>% 
+            ungroup() %>% 
+            mutate(Set = "500")) %>%
+  group_by(Set, Confidence, Target) %>%
+  mutate(N.high = sum(RFQAmodel>=0.5)) %>%
+  mutate(Best = max(TMScore)>=0.5) %>%
+  arrange(-RFQAmodel) %>%
+  slice(1:5) %>%
+  mutate(Top5 = max(TMScore >=0.5)) %>%
+  slice(1) %>%
+  summarise(Top5 = Top5, 
+            Top1 = sum(TMScore>=0.5), 
+            Max = sum(Best)) %>%
+  summarise(Top5 = sum(Top5), 
+            Top1 = sum(Top1),
+            Max = sum(Max),
+            Total = length(Confidence)) %>%
+  mutate(Precision.Top5 = (Top5/Total)*100, 
+         Precision.Top1 = (Top1/Total)*100) %>%
+  select(Set, Confidence, Total, Max, Top1, Precision.Top1, Top5, Precision.Top5)
+
+print(extramediumstats)
+
+#save(extramedium_results, file="results/RFQAmodel_extramedium_results.Rda")
