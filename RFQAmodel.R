@@ -40,7 +40,7 @@ train_tab <- get_features(trainingset)
 val_tab <- get_features(validationset)
 
 # Train Random Forest Classifier to classify models into Correct/Incorrect (or load a pre-trained version)
-if(0){
+if(1){
   set.seed(1011)
   RFQAmodel <- randomForest(as.factor(Label) ~ . -Decoy -Target -TMScore -Set, data=train_tab, importance=TRUE, ntree=500,mtry = 7)
   save(RFQAmodel, file="RFQAmodel_classifier.Rda")
@@ -54,7 +54,7 @@ results <- val_tab %>% ungroup() %>%
   group_by(Target) %>% 
   mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
 
-#write.table(results, file="results/RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
+write.table(results, file="results/RFQAmodel_validation_results.txt", row.names=FALSE, quote=FALSE)
 
 ## Add "All", "High and Medium", and "Predicted Modelling"
 ## For each confidence level, get:
@@ -82,7 +82,7 @@ print(stats)
 
 ## Classify models in the Training Set
 train_results <- train_tab %>% ungroup() %>% mutate(RFQAmodel=as.numeric(predict(RFQAmodel, train_tab, type="prob")[,2]))
-#write.table(train_results, file="results/RFQAmodel_training_results.txt", row.names=FALSE, quote=FALSE)
+write.table(train_results, file="results/RFQAmodel_training_results.txt", row.names=FALSE, quote=FALSE)
 
 
 ## CASP Test set
@@ -107,7 +107,7 @@ CASP_results <- test_tab %>%
   filter(Category!="not") %>% 
   mutate(Type=ifelse(Category %in% c("FM","FM/TBM"), "FM", "TBM"))
 
-#write.table(CASP_results, file="results/RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
+write.table(CASP_results, file="results/RFQAmodel_CASP_test_results.txt", quote=FALSE, row.names=FALSE)
 
 ## Calculate precision
 CASP_stats <- CASP_results %>% 
@@ -135,6 +135,6 @@ extra_results <- extra_tab %>%
   group_by(Set, Target) %>% 
   mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
 
-#write.table(extra_results, "results/RFQAmodel_extras_results.txt",quote=FALSE, row.names=FALSE)
+write.table(extra_results, "results/RFQAmodel_extras_results.txt",quote=FALSE, row.names=FALSE)
 
 
