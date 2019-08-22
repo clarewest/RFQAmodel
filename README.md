@@ -49,6 +49,11 @@ commented out.
 - RFQAmodel_CASP_summary_table.tex
 - RFQAmodel_extras_results.txt
 
+## example of using RFQAmodel
+- example_RFQAmodel.R
+  Example script for using the trained RFQAmodel classifier to classify models
+  and categorise into confidence categories
+
 ### A script for figure and table generation is also included:
 - figures.R
 
