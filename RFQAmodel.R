@@ -40,7 +40,7 @@ train_tab <- get_features(trainingset)
 val_tab <- get_features(validationset)
 
 # Train Random Forest Classifier to classify models into Correct/Incorrect (or load a pre-trained version)
-if(1){
+if(0){
   set.seed(1011)
   RFQAmodel <- randomForest(as.factor(Label) ~ . -Decoy -Target -TMScore -Set, data=train_tab, importance=TRUE, ntree=500,mtry = 7)
   save(RFQAmodel, file="RFQAmodel_classifier.Rda")
@@ -145,6 +145,7 @@ extramedium_tab <- get_features(na.omit(extramediumset))
 
 extramedium_results <-
   extramedium_tab %>%
+  ungroup %>% 
   mutate(RFQAmodel = as.numeric(predict(RFQAmodel,extramedium_tab,type="prob")[,2])) %>% 
   group_by(Set, Target) %>%
   mutate(Confidence = ifelse(max(RFQAmodel) > 0.5 , "High", ifelse(max(RFQAmodel) > 0.3, "Medium", ifelse(max(RFQAmodel) > 0.1, "Low","Failed"))))
@@ -167,15 +168,15 @@ extramediumstats <-
   bind_rows(stopped) %>%
   ungroup() %>%
   mutate(Set = "RFQAiterative") %>%
-  bind_rows(results %>% 
+  bind_rows(extramedium_results %>% 
             filter(Set == 10000) %>% 
             ungroup() %>% 
             mutate(Set="10000")) %>%
-  bind_rows(results %>% 
+  bind_rows(extramedium_results %>% 
             filter(Set == 10000) %>% 
             ungroup() %>% 
             mutate(Set="10000",Confidence = "All")) %>%
-  bind_rows(results %>% 
+  bind_rows(extramedium_results %>% 
             filter(Set == 500) %>% 
             ungroup() %>% 
             mutate(Set = "500")) %>%
@@ -198,5 +199,8 @@ extramediumstats <-
   select(Set, Confidence, Total, Max, Top1, Precision.Top1, Top5, Precision.Top5)
 
 print(extramediumstats)
+
+## median number of models produced 
+stopped %>% group_by(Target) %>% slice(which.max(RFQAmodel)) %>% ungroup() %>% summarise(med = median(as.numeric(Set)))
 
 #save(extramedium_results, file="results/RFQAmodel_extramedium_results.Rda")
