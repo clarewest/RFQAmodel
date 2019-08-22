@@ -141,7 +141,7 @@ print(extra_results)
 
 ## Extra medium targets
 load("data/RFQAmodel_extramediums.Rda")
-extramedium_tab <- get_features(na.omit(extramediumfeatures))
+extramedium_tab <- get_features(na.omit(extramediumset))
 
 extramedium_results <-
   extramedium_tab %>%
