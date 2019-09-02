@@ -56,7 +56,7 @@ commented out.
 
 ## RFQAmodelr: an R package
 - example_RFQAmodelr_package.R
-  Example script for using the RFQAmodelr R package to simplify the above tasks 
+  Example script for using the [RFQAmodelr R package](https://github.com/clarewest/RFQAmodelr) to simplify the above tasks 
 
 ### A script for figure and table generation is also included:
 - figures.R

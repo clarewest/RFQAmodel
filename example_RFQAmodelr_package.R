@@ -7,11 +7,11 @@ library(randomForest)
 ## Read in the input scores 
 input <- read.table("data/RFQAmodel_validation.txt", header=TRUE)
 
-## Caluculate ensemble features
+## Calculate ensemble features
 features <- RFQAmodelr::get_features(input)
 
 ## Load classifier
-load("RFQAmodel_classifier.Rda")
+data(RFQAmodelr)
 
 ## Classify models
 classifications <- RFQAmodelr::classify_models(features, classifier=RFQAmodel)
@@ -21,8 +21,8 @@ classifications <- RFQAmodelr::classify_models(features, classifier=RFQAmodel)
 ## Add confidence categories 
 confidence <- RFQAmodelr::get_confidence(classifications)
 # Optional arguments:
-# predictior = "RFQAmodel"
-# - column to use as the predictior
+# predictor = "RFQAmodel"
+# - column to use as the predictor
 # confidence_cutoffs = c(0.5, 0.3, 0.1)
 # - custom confidence cutoff levels for High, Medium and Low confidence
 
