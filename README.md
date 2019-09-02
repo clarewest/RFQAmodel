@@ -54,6 +54,10 @@ commented out.
   Example script for using the trained RFQAmodel classifier to classify models
   and categorise into confidence categories
 
+## RFQAmodelr: an R package
+- example_RFQAmodelr_package.R
+  Example script for using the RFQAmodelr R package to simplify the above tasks 
+
 ### A script for figure and table generation is also included:
 - figures.R
 
